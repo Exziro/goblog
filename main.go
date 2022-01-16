@@ -2,6 +2,8 @@ package main
 
 import (
 	"database/sql"
+	"strconv"
+
 	//"errors"
 	"fmt"
 	"html/template"
@@ -68,7 +70,14 @@ func articlesStoreHandler(w http.ResponseWriter, r *http.Request) {
 		errors["body"] = "内容过短"
 	}
 	if len(errors) == 0 {
-
+		lastInsertID, err := saveArticlesToDB(title, body)
+		if lastInsertID > 0 {
+			fmt.Fprintf(w, "插入成功，ID为："+strconv.FormatInt(lastInsertID, 10))
+		} else {
+			checkError(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "500服务器内部错误")
+		}
 		fmt.Fprint(w, "验证通过！")
 		fmt.Fprintf(w, "title 的值为: %v <br>", title)
 		fmt.Fprintf(w, "title 的长度为: %v <br>", utf8.RuneCountInString(title))
@@ -160,7 +169,7 @@ func initDB() {
 		AllowNativePasswords: true,
 	}
 	//准备数据库连接池
-	db, err := sql.Open("mysql", config.FormatDSN())
+	db, err = sql.Open("mysql", config.FormatDSN())
 	//fmt.Printf(config.FormatDSN())
 	checkError(err)
 	//设置最大连接数
@@ -176,6 +185,7 @@ func initDB() {
 
 //建表函数
 func creatTables() {
+	//var err error
 	creatArticlesSQL := `CREATE TABLE IF NOT EXISTS articles(
 		id bigint(20) PRIMARY KEY AUTO_INCREMENT NOT NULL,
 		title varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -185,18 +195,30 @@ func creatTables() {
 	checkError(err)
 }
 
-// func saveArticlesToDB(title, body string) (int64, error) {
-// 	//变量初始化
-// 	var (
-// 		id   int64
-// 		err  error
-// 		rs   sql.Result
-// 		stmt *sql.Stmt
-// 	)
-// 	//获取一个prepare
-// 	stmt, err := db.Prepare("INSERT INTO articles (title, body) VALUES(?,?)")
-
-// }
+func saveArticlesToDB(title, body string) (int64, error) {
+	//变量初始化
+	var (
+		id   int64
+		err  error
+		rs   sql.Result
+		stmt *sql.Stmt
+	)
+	//获取一个prepare
+	stmt, err = db.Prepare("INSERT INTO articles (title, body) VALUES(?,?)")
+	//例行错误检查
+	if err != nil {
+		return 0, err
+	}
+	defer stmt.Close()
+	rs, err = stmt.Exec(title, body)
+	if err != nil {
+		return 0, err
+	}
+	if id, err = rs.LastInsertId(); id > 0 {
+		return id, nil
+	}
+	return 0, nil
+}
 
 //报错函数
 func checkError(err error) {
