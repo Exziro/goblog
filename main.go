@@ -25,6 +25,12 @@ type ArticlesFormData struct {
 	Errors      map[string]string
 }
 
+//文章结构体
+type Article struct {
+	Title, Body string
+	ID          int64
+}
+
 var router = mux.NewRouter()
 var db *sql.DB
 
@@ -45,9 +51,36 @@ func aboutHandler(w http.ResponseWriter, r *http.Request) {
 		"<a href=\"mailto:summer@example.com\">summer@example.com</a>")
 }
 func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
+	//获取「URL」请求参数
 	vars := mux.Vars(r)
 	id := vars["id"]
+
+	//读取对应文章数据
+	article := Article{}
+	querry := "SELECT * FROM articles WHERE id = ?"
+	err := db.QueryRow(querry, id).Scan(&article.ID, &article.Body, &article.Title)
+	//错误检测
+
+	if err != nil {
+		//未找到查找项目
+		if err == sql.ErrNoRows {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, "数据未找到404")
+		} else {
+			//服务器内部错误
+			checkError(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "服务器内部错误")
+		}
+	} else {
+		tmpl, err := template.ParseFiles("resources/views/articles/show.gohtml")
+		checkError(err)
+		err = tmpl.Execute(w, article)
+		checkError(err)
+		//fmt.Fprint(w, "读取文章成功"+article.Title)
+	}
 	fmt.Fprint(w, "文章ID："+id)
+
 }
 func articlesIndexHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "文章列表")
@@ -118,6 +151,8 @@ func articlesStoreHandler(w http.ResponseWriter, r *http.Request) {
 	// fmt.Fprintf(w, "r.Form 中 test 的值为: %v <br>", r.FormValue("test"))
 	// fmt.Fprintf(w, "r.PostForm 中 test 的值为: %v <br>", r.PostFormValue("test"))
 }
+
+//文章创建路由
 func articlesCreatHandler(w http.ResponseWriter, r *http.Request) {
 	storeURL, _ := router.Get("articles.store").URL()
 	data := ArticlesFormData{
@@ -195,6 +230,7 @@ func creatTables() {
 	checkError(err)
 }
 
+//博文存储部分函数
 func saveArticlesToDB(title, body string) (int64, error) {
 	//变量初始化
 	var (
