@@ -2,7 +2,7 @@ package main
 
 import (
 	"database/sql"
-	"errors"
+	//"errors"
 	"fmt"
 	"html/template"
 	"log"
@@ -68,6 +68,7 @@ func articlesStoreHandler(w http.ResponseWriter, r *http.Request) {
 		errors["body"] = "内容过短"
 	}
 	if len(errors) == 0 {
+
 		fmt.Fprint(w, "验证通过！")
 		fmt.Fprintf(w, "title 的值为: %v <br>", title)
 		fmt.Fprintf(w, "title 的长度为: %v <br>", utf8.RuneCountInString(title))
@@ -151,15 +152,16 @@ func removeTrailingSlash(next http.Handler) http.Handler {
 func initDB() {
 	var err error
 	config := mysql.Config{
-		User:                 "homestead",
-		Passwd:               "secret",
-		Addr:                 "127.0.0.1:33060",
+		User:                 "root",
+		Passwd:               "qiyixi19961016",
+		Addr:                 "127.0.0.1:3306",
 		Net:                  "tcp",
 		DBName:               "goblog",
 		AllowNativePasswords: true,
 	}
 	//准备数据库连接池
 	db, err := sql.Open("mysql", config.FormatDSN())
+	//fmt.Printf(config.FormatDSN())
 	checkError(err)
 	//设置最大连接数
 	db.SetMaxOpenConns(25)
@@ -171,6 +173,32 @@ func initDB() {
 	err = db.Ping()
 	checkError(err)
 }
+
+//建表函数
+func creatTables() {
+	creatArticlesSQL := `CREATE TABLE IF NOT EXISTS articles(
+		id bigint(20) PRIMARY KEY AUTO_INCREMENT NOT NULL,
+		title varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+		body longtext COLLATE utf8mb4_unicode_ci
+	); `
+	_, err := db.Exec(creatArticlesSQL)
+	checkError(err)
+}
+
+// func saveArticlesToDB(title, body string) (int64, error) {
+// 	//变量初始化
+// 	var (
+// 		id   int64
+// 		err  error
+// 		rs   sql.Result
+// 		stmt *sql.Stmt
+// 	)
+// 	//获取一个prepare
+// 	stmt, err := db.Prepare("INSERT INTO articles (title, body) VALUES(?,?)")
+
+// }
+
+//报错函数
 func checkError(err error) {
 	if err != nil {
 		log.Fatal(err)
@@ -178,6 +206,7 @@ func checkError(err error) {
 }
 func main() {
 	initDB()
+	creatTables()
 	router.HandleFunc("/", homeHandler).Methods("GET").Name("home")
 	router.HandleFunc("/about", aboutHandler).Methods("GET").Name("about")
 	router.HandleFunc("/articles/{id:[0-9]+}", articlesShowHandler).Methods("GET").Name("articles.show")
