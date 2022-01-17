@@ -65,6 +65,22 @@ func getArticleByID(id string) (Article, error) {
 	return article, err
 }
 
+//RoutName2URL 通过路由名称获取URL
+func RouteName2URL(routName string, pairs ...string) string {
+	url, err := router.Get(routName).URL(pairs...)
+	if err != nil {
+		checkError(err)
+		return ""
+	}
+
+	return url.String()
+}
+
+//int 64 转换为string
+func Int64ToString(num int64) string {
+	return strconv.FormatInt(num, 10)
+}
+
 //验证表单内容函数
 func validateArticleFromData(title, body string) map[string]string {
 	errors := make(map[string]string)
@@ -89,6 +105,17 @@ func (a Article) Link() string {
 	return showURL.String()
 
 }
+func (a Article) Delete() (rowsAffected int64, err error) {
+	rs, err := db.Exec("DELETE FROM articles WHERE id = " + strconv.FormatInt(a.ID, 10))
+	if err != nil {
+		checkError(err)
+	}
+	//删除成功，跳转到文章详情页
+	if n, _ := rs.RowsAffected(); n > 0 {
+		return n, nil
+	}
+	return 0, nil
+}
 func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
 	//获取「URL」请求参数
 	id := getRouterVariable("id", r)
@@ -111,7 +138,12 @@ func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprint(w, "服务器内部错误")
 		}
 	} else {
-		tmpl, err := template.ParseFiles("resources/views/articles/show.gohtml")
+		tmpl, err := template.New("show.gohtml").
+			Funcs(template.FuncMap{
+				"RouteName2URL": RouteName2URL,
+				"Int64ToString": Int64ToString,
+			}).
+			ParseFiles("resources/views/articles/show.gohtml")
 		checkError(err)
 		err = tmpl.Execute(w, article)
 		checkError(err)
@@ -308,6 +340,46 @@ func articlesUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	//fmt.Fprintf(w, "更新成功")
 }
+func articlesDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	//获取URL参数
+	id := getRouterVariable("id", r)
+	//读取对应的文章数据
+	article, err := getArticleByID(id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, "404 没有找到数据")
+		} else {
+			//
+			checkError(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "500 服务器内部错误")
+		}
+
+	} else {
+		//未出现错误，执行删除
+		rowsAffected, err := article.Delete()
+		if err != nil {
+			checkError(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "500服务器内部错误")
+
+		} else {
+			//未发生错误
+			if rowsAffected > 0 {
+				//重定向到文章列表
+				indexURL, _ := router.Get("articles.index").URL()
+				http.Redirect(w, r, indexURL.String(), http.StatusFound)
+
+			} else {
+				//Edge case
+				w.WriteHeader(http.StatusNotFound)
+				fmt.Fprint(w, "404未找到文章")
+
+			}
+		}
+	}
+}
 
 //中间件处理，用于设置所有页面适配请求头的处理模式
 func forceHTMLMiddleware(h http.Handler) http.Handler {
@@ -411,6 +483,7 @@ func main() {
 	router.HandleFunc("/articles/create", articlesCreatHandler).Methods("GET").Name("aricles.creat")
 	router.HandleFunc("/articles/{id:[0-9]+}/edit", articlesHandlerEditHandler).Methods("GET").Name("articles.edit")
 	router.HandleFunc("/articles/{id:[0-9]+}", articlesUpdateHandler).Methods("POST").Name("articles.update")
+	router.HandleFunc("/articles/{id:[0-9]+}/delete", articlesDeleteHandler).Methods("POST").Name("articles.delete")
 	//自定义404
 	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 	// 中间件的使用 强转网页类型
