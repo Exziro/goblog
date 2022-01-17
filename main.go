@@ -64,6 +64,22 @@ func getArticleByID(id string) (Article, error) {
 	err := db.QueryRow(querry, id).Scan(&article.ID, &article.Body, &article.Title)
 	return article, err
 }
+
+//验证表单内容函数
+func validateArticleFromData(title, body string) map[string]string {
+	errors := make(map[string]string)
+	if title == "" {
+		errors["title"] = "标题不能为空"
+	} else if utf8.RuneCountInString("title") < 3 || utf8.RuneCountInString("title") > 40 {
+		errors["title"] = "标题字数不正确"
+	}
+	if body == "" {
+		errors["body"] = "内容不能为空"
+	} else if utf8.RuneCountInString(body) < 10 {
+		errors["body"] = "内容长度需大于或等于 10 个字节"
+	}
+	return errors
+}
 func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
 	//获取「URL」请求参数
 	id := getRouterVariable("id", r)
@@ -101,20 +117,8 @@ func articlesIndexHandler(w http.ResponseWriter, r *http.Request) {
 func articlesStoreHandler(w http.ResponseWriter, r *http.Request) {
 	title := r.PostFormValue("title")
 	body := r.PostFormValue("body")
-	errors := make(map[string]string)
-	//标题验证
-	if title == "" {
-		errors["title"] = "标题不能为空"
-
-	} else if len(title) < 3 || len(title) > 20 {
-		errors["title"] = "标题字数不对"
-	}
-	//内容验证
-	if body == "" {
-		errors["body"] = "内容不能为空"
-	} else if len(body) < 10 {
-		errors["body"] = "内容过短"
-	}
+	//表单验证
+	errors := validateArticleFromData(title, body)
 	if len(errors) == 0 {
 		lastInsertID, err := saveArticlesToDB(title, body)
 		if lastInsertID > 0 {
@@ -234,21 +238,9 @@ func articlesUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		title := r.FormValue("title")
 		body := r.FormValue("body")
+		//表单验证
+		errors := validateArticleFromData(title, body)
 
-		errors := make(map[string]string)
-
-		if title == "" {
-			errors["title"] = "标题不能为空"
-		} else if utf8.RuneCountInString(title) < 3 || utf8.RuneCountInString(title) > 40 {
-			errors["title"] = "标题字数不正确"
-
-		}
-		if body == "" {
-			errors["body"] = "内容不能为空"
-		} else if utf8.RuneCountInString(body) < 10 {
-			errors["body"] = "内容字数不正确"
-
-		}
 		if len(errors) == 0 {
 			//表单验证结束 将内容进行更新
 			query := "UPDATE articles SET title = ?, body = ? WHERE id = ?"
@@ -260,7 +252,7 @@ func articlesUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			//更新成功进入跳转页面
 			if n, _ := rs.RowsAffected(); n > 0 {
-				showURL, _ := router.Get("articles.show").URL()
+				showURL, _ := router.Get("articles.show").URL("id", id)
 				http.Redirect(w, r, showURL.String(), http.StatusFound)
 
 			} else {
@@ -273,17 +265,17 @@ func articlesUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			data := ArticlesFormData{
 				Title:  title,
 				Body:   body,
-				Errors: nil,
+				Errors: errors,
 				URL:    upDateURL,
 			}
-			tmpl, err := template.ParseFiles("resources/views/articles/edit.gothtml")
+			tmpl, err := template.ParseFiles("resources/views/articles/edit.gohtml")
 			checkError(err)
 			err = tmpl.Execute(w, data)
 			checkError(err)
-
+			fmt.Fprintf(w, "更新失败")
 		}
 	}
-	fmt.Fprintf(w, "更新成功")
+	//fmt.Fprintf(w, "更新成功")
 }
 
 //中间件处理，用于设置所有页面适配请求头的处理模式
