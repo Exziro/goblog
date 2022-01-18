@@ -52,29 +52,12 @@ func aboutHandler(w http.ResponseWriter, r *http.Request) {
 		"<a href=\"mailto:summer@example.com\">summer@example.com</a>")
 }
 
-//通过传参 URL 路由参数名称获取值
-func getRouterVariable(parameterName string, r *http.Request) string {
-	vars := mux.Vars(r)
-	return vars[parameterName]
-}
-
 //通过传参 id 获取博文
 func getArticleByID(id string) (Article, error) {
 	article := Article{}
 	querry := "SELECT * FROM articles WHERE id = ?"
 	err := db.QueryRow(querry, id).Scan(&article.ID, &article.Body, &article.Title)
 	return article, err
-}
-
-//RoutName2URL 通过路由名称获取URL
-func RouteName2URL(routName string, pairs ...string) string {
-	url, err := router.Get(routName).URL(pairs...)
-	if err != nil {
-		checkError(err)
-		return ""
-	}
-
-	return url.String()
 }
 
 //int 64 转换为string
@@ -119,7 +102,7 @@ func (a Article) Delete() (rowsAffected int64, err error) {
 }
 func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
 	//获取「URL」请求参数
-	id := getRouterVariable("id", r)
+	id := route.GetRouterVariable("id", r)
 	//读取对应文章数据
 	article, err := getArticleByID(id)
 	// article := Article{}
@@ -256,7 +239,7 @@ func articlesCreateHandler(w http.ResponseWriter, r *http.Request) {
 func articlesHandlerEditHandler(w http.ResponseWriter, r *http.Request) {
 	// vars := mux.Vars(r)
 	// id := vars["id"]
-	id := getRouterVariable("id", r)
+	id := route.GetRouterVariable("id", r)
 	//读取文章数据
 	article, err := getArticleByID(id)
 	// article := Article{}
@@ -288,7 +271,7 @@ func articlesHandlerEditHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func articlesUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	id := getRouterVariable("id", r)
+	id := route.GetRouterVariable("id", r)
 	_, err := getArticleByID(id)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -343,7 +326,7 @@ func articlesUpdateHandler(w http.ResponseWriter, r *http.Request) {
 }
 func articlesDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	//获取URL参数
-	id := getRouterVariable("id", r)
+	id := route.GetRouterVariable("id", r)
 	//读取对应的文章数据
 	article, err := getArticleByID(id)
 	if err != nil {
