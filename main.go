@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"goblog/pkg/route"
 	"strconv"
 
 	//"errors"
@@ -31,7 +32,7 @@ type Article struct {
 	ID          int64
 }
 
-var router = mux.NewRouter()
+var router *mux.Router
 var db *sql.DB
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
@@ -140,7 +141,7 @@ func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		tmpl, err := template.New("show.gohtml").
 			Funcs(template.FuncMap{
-				"RouteName2URL": RouteName2URL,
+				"RouteName2URL": route.Name2URL,
 				"Int64ToString": Int64ToString,
 			}).
 			ParseFiles("resources/views/articles/show.gohtml")
@@ -473,8 +474,11 @@ func checkError(err error) {
 	}
 }
 func main() {
+
 	initDB()
 	createTables()
+	route.Initialize()
+	router = route.Router
 	router.HandleFunc("/", homeHandler).Methods("GET").Name("home")
 	router.HandleFunc("/about", aboutHandler).Methods("GET").Name("about")
 	router.HandleFunc("/articles/{id:[0-9]+}", articlesShowHandler).Methods("GET").Name("articles.show")
