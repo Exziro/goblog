@@ -233,7 +233,7 @@ func articlesStoreHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 //文章创建路由
-func articlesCreatHandler(w http.ResponseWriter, r *http.Request) {
+func articlesCreateHandler(w http.ResponseWriter, r *http.Request) {
 	storeURL, _ := router.Get("articles.store").URL()
 	data := ArticlesFormData{
 		Title:  "",
@@ -241,7 +241,7 @@ func articlesCreatHandler(w http.ResponseWriter, r *http.Request) {
 		URL:    storeURL,
 		Errors: nil,
 	}
-	tmpl, err := template.ParseFiles("resources/views/articles/creat.gohtml")
+	tmpl, err := template.ParseFiles("resources/views/articles/create.gohtml")
 	if err != nil {
 		panic(err)
 	}
@@ -429,14 +429,14 @@ func initDB() {
 }
 
 //建表函数
-func creatTables() {
+func createTables() {
 	//var err error
-	creatArticlesSQL := `CREATE TABLE IF NOT EXISTS articles(
+	createArticlesSQL := `CREATE TABLE IF NOT EXISTS articles(
 		id bigint(20) PRIMARY KEY AUTO_INCREMENT NOT NULL,
 		title varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
 		body longtext COLLATE utf8mb4_unicode_ci
 	); `
-	_, err := db.Exec(creatArticlesSQL)
+	_, err := db.Exec(createArticlesSQL)
 	checkError(err)
 }
 
@@ -474,13 +474,13 @@ func checkError(err error) {
 }
 func main() {
 	initDB()
-	creatTables()
+	createTables()
 	router.HandleFunc("/", homeHandler).Methods("GET").Name("home")
 	router.HandleFunc("/about", aboutHandler).Methods("GET").Name("about")
 	router.HandleFunc("/articles/{id:[0-9]+}", articlesShowHandler).Methods("GET").Name("articles.show")
 	router.HandleFunc("/articles", articlesIndexHandler).Methods("GET").Name("articles.index")
 	router.HandleFunc("/articles", articlesStoreHandler).Methods("POST").Name("articles.store")
-	router.HandleFunc("/articles/create", articlesCreatHandler).Methods("GET").Name("aricles.creat")
+	router.HandleFunc("/articles/create", articlesCreateHandler).Methods("GET").Name("aricles.create")
 	router.HandleFunc("/articles/{id:[0-9]+}/edit", articlesHandlerEditHandler).Methods("GET").Name("articles.edit")
 	router.HandleFunc("/articles/{id:[0-9]+}", articlesUpdateHandler).Methods("POST").Name("articles.update")
 	router.HandleFunc("/articles/{id:[0-9]+}/delete", articlesDeleteHandler).Methods("POST").Name("articles.delete")
