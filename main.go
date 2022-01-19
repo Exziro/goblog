@@ -2,9 +2,11 @@ package main
 
 import (
 	"database/sql"
+	//"go/types"
 	//"goblog/pkg/logger"
 	"goblog/pkg/logger"
 	"goblog/pkg/route"
+	"goblog/pkg/types"
 	"strconv"
 
 	//"errors"
@@ -59,11 +61,6 @@ func getArticleByID(id string) (Article, error) {
 	querry := "SELECT * FROM articles WHERE id = ?"
 	err := db.QueryRow(querry, id).Scan(&article.ID, &article.Body, &article.Title)
 	return article, err
-}
-
-//int 64 转换为string
-func Int64ToString(num int64) string {
-	return strconv.FormatInt(num, 10)
 }
 
 //验证表单内容函数
@@ -126,7 +123,7 @@ func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
 		tmpl, err := template.New("show.gohtml").
 			Funcs(template.FuncMap{
 				"RouteName2URL": route.Name2URL,
-				"Int64ToString": Int64ToString,
+				"Int64ToString": types.Int64ToString,
 			}).
 			ParseFiles("resources/views/articles/show.gohtml")
 		logger.LogError(err)
