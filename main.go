@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	//"go/types"
 	//"goblog/pkg/logger"
+	"goblog/pkg/database"
 	"goblog/pkg/logger"
 	"goblog/pkg/route"
 	"goblog/pkg/types"
@@ -449,9 +450,8 @@ func saveArticlesToDB(title, body string) (int64, error) {
 }
 
 func main() {
-
-	initDB()
-	createTables()
+	database.Initialize()
+	db = database.DB
 	route.Initialize()
 	router = route.Router
 	router.HandleFunc("/", homeHandler).Methods("GET").Name("home")
