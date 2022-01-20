@@ -2,9 +2,9 @@ package logger
 
 import "log"
 
-//查错函数
+//当存在错误时，记录日志
 func LogError(err error) {
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 }
