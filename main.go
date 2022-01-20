@@ -7,6 +7,7 @@ import (
 	bootsrap "goblog/bootstrap"
 	"goblog/pkg/database"
 	"goblog/pkg/logger"
+	//"goblog/pkg/model"
 
 	"strconv"
 
@@ -16,10 +17,10 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
+
+	//"time"
 	"unicode/utf8"
 
-	"github.com/go-sql-driver/mysql"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 )
@@ -333,32 +334,6 @@ func removeTrailingSlash(next http.Handler) http.Handler {
 	})
 }
 
-//数据库链接初始化
-func initDB() {
-	var err error
-	config := mysql.Config{
-		User:                 "root",
-		Passwd:               "qiyixi19961016",
-		Addr:                 "127.0.0.1:3306",
-		Net:                  "tcp",
-		DBName:               "goblog",
-		AllowNativePasswords: true,
-	}
-	//准备数据库连接池
-	db, err = sql.Open("mysql", config.FormatDSN())
-	//fmt.Printf(config.FormatDSN())
-	logger.LogError(err)
-	//设置最大连接数
-	db.SetMaxOpenConns(25)
-	//设置最大空闲连接数
-	db.SetMaxIdleConns(25)
-	//设置每个链接的过期时间
-	db.SetConnMaxIdleTime(5 * time.Minute)
-	//
-	err = db.Ping()
-	logger.LogError(err)
-}
-
 //建表函数
 func createTables() {
 	//var err error
@@ -404,7 +379,9 @@ func getRouterVariable(parameterName string, r *http.Request) string {
 func main() {
 	database.Initialize()
 	db = database.DB
+	bootsrap.SetupDB()
 	router = bootsrap.SetupRoute()
+
 	router.HandleFunc("/articles", articlesIndexHandler).Methods("GET").Name("articles.index")
 	router.HandleFunc("/articles", articlesStoreHandler).Methods("POST").Name("articles.store")
 	router.HandleFunc("/articles/create", articlesCreateHandler).Methods("GET").Name("aricles.create")
