@@ -4,6 +4,7 @@ import (
 	//"database/sql"
 	"fmt"
 	"goblog/pkg/logger"
+
 	"strconv"
 	"unicode/utf8"
 
@@ -138,7 +139,7 @@ func (*ArticlesController) Store(w http.ResponseWriter, r *http.Request) {
 	// fmt.Fprintf(w, "r.PostForm 中 test 的值为: %v <br>", r.PostFormValue("test"))
 }
 
-//文章创建
+//Create 文章创建
 func (*ArticlesController) Create(w http.ResponseWriter, r *http.Request) {
 	storeURL := route.Name2URL("articles.store")
 	data := ArticlesFormData{
@@ -172,7 +173,7 @@ func validateArticleFromData(title, body string) map[string]string {
 	return errors
 }
 
-//博文修改
+//Edit 博文修改
 func (*ArticlesController) Edit(w http.ResponseWriter, r *http.Request) {
 	// vars := mux.Vars(r)
 	// id := vars["id"]
@@ -208,6 +209,8 @@ func (*ArticlesController) Edit(w http.ResponseWriter, r *http.Request) {
 		logger.LogError(err)
 	}
 }
+
+//更新博文
 func (*ArticlesController) Update(w http.ResponseWriter, r *http.Request) {
 	id := route.GetRouterVariable("id", r)
 	_article, err := article.Get(id)
@@ -263,4 +266,47 @@ func (*ArticlesController) Update(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+}
+
+//Delete 删除博文
+func (articles *ArticlesController) Delete(w http.ResponseWriter, r *http.Request) {
+	//获取URL参数
+	id := route.GetRouterVariable("id", r)
+	//读取对应的文章数据
+	_article, err := article.Get(id)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			//数据未找到
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, "404 没有找到数据")
+		} else {
+			//
+			logger.LogError(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "500 服务器内部错误")
+		}
+
+	} else {
+		//未出现错误，执行删除
+		rowsAffected, err := _article.Delete()
+		if err != nil {
+			logger.LogError(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "500服务器内部错误")
+
+		} else {
+			//未发生错误
+			if rowsAffected > 0 {
+				//重定向到文章列表
+				indexURL := route.Name2URL("articles.index", "id", id)
+				http.Redirect(w, r, indexURL, http.StatusFound)
+
+			} else {
+				//Edge case
+				w.WriteHeader(http.StatusNotFound)
+				fmt.Fprint(w, "404未找到文章")
+
+			}
+		}
+	}
 }
