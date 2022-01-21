@@ -171,3 +171,96 @@ func validateArticleFromData(title, body string) map[string]string {
 	}
 	return errors
 }
+
+//博文修改
+func (*ArticlesController) Edit(w http.ResponseWriter, r *http.Request) {
+	// vars := mux.Vars(r)
+	// id := vars["id"]
+	id := route.GetRouterVariable("id", r)
+	//读取文章数据
+	article, err := article.Get(id)
+	// article := Article{}
+	// querry := "SELECT * FROM articles WHERE id = ?"
+	// err := db.QueryRow(querry, id).Scan(&article.ID, &article.Title, &article.Body)
+
+	//查错
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, "文章未查找到404")
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "服务器内部错误500")
+		}
+
+	} else {
+		// 4. 读取成功，显示编辑文章表单
+		updateURL := route.Name2URL("articles.update", "id", id)
+		data := ArticlesFormData{
+			Title:  article.Title,
+			Body:   article.Body,
+			URL:    updateURL,
+			Errors: nil,
+		}
+		tmp, err := template.ParseFiles("resources/views/articles/edit.gohtml")
+		logger.LogError(err)
+		err = tmp.Execute(w, data)
+		logger.LogError(err)
+	}
+}
+func (*ArticlesController) Update(w http.ResponseWriter, r *http.Request) {
+	id := route.GetRouterVariable("id", r)
+	_article, err := article.Get(id)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, "404 文章未找到")
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "300 服务器内部出错")
+		}
+
+	} else {
+		title := r.FormValue("title")
+		body := r.FormValue("body")
+		//表单验证
+		errors := validateArticleFromData(title, body)
+
+		if len(errors) == 0 {
+			//表单验证结束 将内容进行更新
+			_article.Title = title
+			_article.Body = body
+
+			rowsAffected, err := _article.Update()
+			if err != nil {
+				logger.LogError(err)
+				w.WriteHeader(http.StatusInternalServerError)
+				fmt.Fprint(w, "500 服务器内部错误")
+			}
+			//更新成功进入跳转页面
+			if rowsAffected > 0 {
+				showURL := route.Name2URL("articles.show", "id", id)
+				http.Redirect(w, r, showURL, http.StatusFound)
+
+			} else {
+				fmt.Fprint(w, "没有做任何更改")
+			}
+
+		} else {
+			//表单验证不通过，显示理由
+			updateURL := route.Name2URL("articles.update", "id", id)
+			data := ArticlesFormData{
+				Title:  title,
+				Body:   body,
+				Errors: errors,
+				URL:    updateURL,
+			}
+			tmpl, err := template.ParseFiles("resources/views/articles/edit.gohtml")
+			logger.LogError(err)
+			err = tmpl.Execute(w, data)
+			logger.LogError(err)
+			fmt.Fprintf(w, "更新失败")
+		}
+	}
+
+}

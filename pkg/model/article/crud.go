@@ -31,3 +31,10 @@ func (articles *Article) Create() (err error) {
 	}
 	return nil
 }
+func (articles *Article) Update() (rowsAffected int64, err error) {
+	result := model.DB.Save(&articles)
+	if err = result.Error; err != nil {
+		return 0, err
+	}
+	return result.RowsAffected, nil
+}
