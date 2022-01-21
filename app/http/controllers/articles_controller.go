@@ -17,6 +17,7 @@ import (
 type ArticlesController struct {
 }
 
+//展示文章（博文）内容
 func (*ArticlesController) Show(w http.ResponseWriter, r *http.Request) {
 	//获取「URL」请求参数
 	id := route.GetRouterVariable("id", r)
@@ -52,4 +53,23 @@ func (*ArticlesController) Show(w http.ResponseWriter, r *http.Request) {
 	}
 	//fmt.Fprint(w, "文章ID："+id)
 
+}
+
+//Index文章列表
+func (*ArticlesController) Index(w http.ResponseWriter, r *http.Request) {
+	articles, err := article.GetAll()
+	if err != nil {
+		//数据库错误
+		logger.LogError(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "500服务器错误")
+	} else {
+		//加载模板
+		tmpl, err := template.ParseFiles("resources/views/articles/index.gohtml")
+		logger.LogError(err)
+
+		//渲染模板
+		err = tmpl.Execute(w, articles)
+		logger.LogError(err)
+	}
 }

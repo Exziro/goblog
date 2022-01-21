@@ -2,7 +2,9 @@ package model
 
 import (
 	"goblog/pkg/logger"
-
+	//命令行查看调试语句
+	gormlogger "gorm.io/gorm/logger"
+	// GORM 的 MSYQL 数据库驱动导入
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -17,7 +19,9 @@ func ConnectDB() *gorm.DB {
 		DSN: "root:qiyixi19961016@tcp(127.0.0.1:3306)/goblog?charset=utf8&parseTime=True&loc=Local",
 	})
 	//准备数据链接池
-	DB, err = gorm.Open(config, &gorm.Config{})
+	DB, err = gorm.Open(config, &gorm.Config{
+		Logger: gormlogger.Default.LogMode(gormlogger.Warn),
+	})
 	logger.LogError(err)
 
 	return DB

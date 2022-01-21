@@ -63,15 +63,7 @@ func validateArticleFromData(title, body string) map[string]string {
 	}
 	return errors
 }
-func (a Article) Link() string {
-	showURL, err := router.Get("articles.show").URL("id", strconv.FormatInt(a.ID, 10))
-	if err != nil {
-		logger.LogError(err)
-		return ""
-	}
-	return showURL.String()
 
-}
 func (a Article) Delete() (rowsAffected int64, err error) {
 	rs, err := db.Exec("DELETE FROM articles WHERE id = " + strconv.FormatInt(a.ID, 10))
 	if err != nil {
@@ -84,31 +76,6 @@ func (a Article) Delete() (rowsAffected int64, err error) {
 	return 0, nil
 }
 
-func articlesIndexHandler(w http.ResponseWriter, r *http.Request) {
-	//从数据库读取条目
-	rows, err := db.Query("SELECT * from articles")
-	logger.LogError(err)
-	//创建一个文章数组
-	var articles []Article
-	// 2.1 扫描每一行的结果并赋值到一个 article 对象中
-	for rows.Next() {
-		var article Article
-		err := rows.Scan(&article.ID, &article.Title, &article.Body)
-		logger.LogError(err)
-		//将新的内容追加进数组
-		articles = append(articles, article)
-	}
-	//检测遍历时是否发生错误
-	err = rows.Err()
-	logger.LogError(err)
-	//加载模板
-	tmpl, err := template.ParseFiles("resources/views/articles/index.gohtml")
-	logger.LogError(err)
-	//渲染模板
-	err = tmpl.Execute(w, articles)
-	logger.LogError(err)
-	fmt.Fprint(w, "文章列表")
-}
 func articlesStoreHandler(w http.ResponseWriter, r *http.Request) {
 	title := r.PostFormValue("title")
 	body := r.PostFormValue("body")
@@ -334,18 +301,6 @@ func removeTrailingSlash(next http.Handler) http.Handler {
 	})
 }
 
-//建表函数
-func createTables() {
-	//var err error
-	createArticlesSQL := `CREATE TABLE IF NOT EXISTS articles(
-		id bigint(20) PRIMARY KEY AUTO_INCREMENT NOT NULL,
-		title varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-		body longtext COLLATE utf8mb4_unicode_ci
-	); `
-	_, err := db.Exec(createArticlesSQL)
-	logger.LogError(err)
-}
-
 //博文存储部分函数
 func saveArticlesToDB(title, body string) (int64, error) {
 	//变量初始化
@@ -382,7 +337,6 @@ func main() {
 	bootsrap.SetupDB()
 	router = bootsrap.SetupRoute()
 
-	router.HandleFunc("/articles", articlesIndexHandler).Methods("GET").Name("articles.index")
 	router.HandleFunc("/articles", articlesStoreHandler).Methods("POST").Name("articles.store")
 	router.HandleFunc("/articles/create", articlesCreateHandler).Methods("GET").Name("aricles.create")
 	router.HandleFunc("/articles/{id:[0-9]+}/edit", articlesHandlerEditHandler).Methods("GET").Name("articles.edit")
