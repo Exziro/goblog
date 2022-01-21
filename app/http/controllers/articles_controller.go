@@ -4,6 +4,8 @@ import (
 	//"database/sql"
 	"fmt"
 	"goblog/pkg/logger"
+	"strconv"
+	"unicode/utf8"
 
 	"goblog/pkg/model/article"
 	"goblog/pkg/route"
@@ -15,6 +17,13 @@ import (
 )
 
 type ArticlesController struct {
+}
+
+//ArticlesFormData 创建博文表单数据
+type ArticlesFormData struct {
+	Title, Body string
+	URL         string
+	Errors      map[string]string
 }
 
 //展示文章（博文）内容
@@ -72,4 +81,93 @@ func (*ArticlesController) Index(w http.ResponseWriter, r *http.Request) {
 		err = tmpl.Execute(w, articles)
 		logger.LogError(err)
 	}
+}
+
+//Store文章保存
+func (*ArticlesController) Store(w http.ResponseWriter, r *http.Request) {
+	title := r.PostFormValue("title")
+	body := r.PostFormValue("body")
+	//表单验证
+	errors := validateArticleFromData(title, body)
+	if len(errors) == 0 {
+		_article := article.Article{
+			Title: title,
+			Body:  body,
+		}
+		_article.Create()
+		if _article.ID > 0 {
+			fmt.Fprintf(w, "插入成功，ID为："+strconv.FormatUint(_article.ID, 10))
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "500服务器内部错误")
+		}
+		fmt.Fprint(w, "验证通过！")
+		fmt.Fprintf(w, "title 的值为: %v <br>", title)
+		fmt.Fprintf(w, "title 的长度为: %v <br>", utf8.RuneCountInString(title))
+		fmt.Fprintf(w, "body 的值为: %v <br>", body)
+		fmt.Fprintf(w, "body 的长度为: %v <br>", utf8.RuneCountInString(body))
+
+	} else {
+		storeURL := route.Name2URL("articles.store")
+
+		data := ArticlesFormData{
+			Title:  title,
+			Body:   body,
+			URL:    storeURL,
+			Errors: errors,
+		}
+		tmpl, err := template.ParseFiles("resources/views/articles/create.gohtml")
+		logger.LogError(err)
+
+		err = tmpl.Execute(w, data)
+		logger.LogError(err)
+
+		// fmt.Fprintf(w, "有错误发生，errors 的值为: %v <br>", errors)
+	}
+	// err := r.ParseForm()
+	// if err != nil {
+	// 	fmt.Fprint(w, "please check your form")
+	// 	return
+	// }
+
+	//title := r.PostForm.Get("title")
+	//获取请求的数据由以下
+	// fmt.Fprintf(w, "r.Form 中 title 的值为: %v <br>", r.FormValue("title"))
+	// fmt.Fprintf(w, "r.PostForm 中 title 的值为: %v <br>", r.PostFormValue("title"))
+	// fmt.Fprintf(w, "r.Form 中 test 的值为: %v <br>", r.FormValue("test"))
+	// fmt.Fprintf(w, "r.PostForm 中 test 的值为: %v <br>", r.PostFormValue("test"))
+}
+
+//文章创建
+func (*ArticlesController) Create(w http.ResponseWriter, r *http.Request) {
+	storeURL := route.Name2URL("articles.store")
+	data := ArticlesFormData{
+		Title:  "",
+		Body:   "",
+		URL:    storeURL,
+		Errors: nil,
+	}
+	tmpl, err := template.ParseFiles("resources/views/articles/create.gohtml")
+	if err != nil {
+		panic(err)
+	}
+	err = tmpl.Execute(w, data)
+	if err != nil {
+		panic(err)
+	}
+
+}
+func validateArticleFromData(title, body string) map[string]string {
+	errors := make(map[string]string)
+	if title == "" {
+		errors["title"] = "标题不能为空"
+	} else if utf8.RuneCountInString("title") < 3 || utf8.RuneCountInString("title") > 40 {
+		errors["title"] = "标题字数不正确"
+	}
+	if body == "" {
+		errors["body"] = "内容不能为空"
+	} else if utf8.RuneCountInString(body) < 10 {
+		errors["body"] = "内容长度需大于或等于 10 个字节"
+	}
+	return errors
 }

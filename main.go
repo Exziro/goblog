@@ -76,80 +76,6 @@ func (a Article) Delete() (rowsAffected int64, err error) {
 	return 0, nil
 }
 
-func articlesStoreHandler(w http.ResponseWriter, r *http.Request) {
-	title := r.PostFormValue("title")
-	body := r.PostFormValue("body")
-	//表单验证
-	errors := validateArticleFromData(title, body)
-	if len(errors) == 0 {
-		lastInsertID, err := saveArticlesToDB(title, body)
-		if lastInsertID > 0 {
-			fmt.Fprintf(w, "插入成功，ID为："+strconv.FormatInt(lastInsertID, 10))
-		} else {
-			logger.LogError(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprint(w, "500服务器内部错误")
-		}
-		fmt.Fprint(w, "验证通过！")
-		fmt.Fprintf(w, "title 的值为: %v <br>", title)
-		fmt.Fprintf(w, "title 的长度为: %v <br>", utf8.RuneCountInString(title))
-		fmt.Fprintf(w, "body 的值为: %v <br>", body)
-		fmt.Fprintf(w, "body 的长度为: %v <br>", utf8.RuneCountInString(body))
-
-	} else {
-		storeURL, _ := router.Get("articles.store").URL()
-
-		data := ArticlesFormData{
-			Title:  title,
-			Body:   body,
-			URL:    storeURL,
-			Errors: errors,
-		}
-		tmpl, err := template.ParseFiles("resources/views/articles/create.gohtml")
-		if err != nil {
-			panic(err)
-		}
-
-		err = tmpl.Execute(w, data)
-		if err != nil {
-			panic(err)
-		}
-
-		// fmt.Fprintf(w, "有错误发生，errors 的值为: %v <br>", errors)
-	}
-	// err := r.ParseForm()
-	// if err != nil {
-	// 	fmt.Fprint(w, "please check your form")
-	// 	return
-	// }
-
-	//title := r.PostForm.Get("title")
-	//获取请求的数据由以下
-	// fmt.Fprintf(w, "r.Form 中 title 的值为: %v <br>", r.FormValue("title"))
-	// fmt.Fprintf(w, "r.PostForm 中 title 的值为: %v <br>", r.PostFormValue("title"))
-	// fmt.Fprintf(w, "r.Form 中 test 的值为: %v <br>", r.FormValue("test"))
-	// fmt.Fprintf(w, "r.PostForm 中 test 的值为: %v <br>", r.PostFormValue("test"))
-}
-
-//文章创建路由
-func articlesCreateHandler(w http.ResponseWriter, r *http.Request) {
-	storeURL, _ := router.Get("articles.store").URL()
-	data := ArticlesFormData{
-		Title:  "",
-		Body:   "",
-		URL:    storeURL,
-		Errors: nil,
-	}
-	tmpl, err := template.ParseFiles("resources/views/articles/create.gohtml")
-	if err != nil {
-		panic(err)
-	}
-	err = tmpl.Execute(w, data)
-	if err != nil {
-		panic(err)
-	}
-}
-
 //博文修改
 func articlesHandlerEditHandler(w http.ResponseWriter, r *http.Request) {
 	// vars := mux.Vars(r)
@@ -302,30 +228,7 @@ func removeTrailingSlash(next http.Handler) http.Handler {
 }
 
 //博文存储部分函数
-func saveArticlesToDB(title, body string) (int64, error) {
-	//变量初始化
-	var (
-		id   int64
-		err  error
-		rs   sql.Result
-		stmt *sql.Stmt
-	)
-	//获取一个prepare
-	stmt, err = db.Prepare("INSERT INTO articles (title, body) VALUES(?,?)")
-	//例行错误检查
-	if err != nil {
-		return 0, err
-	}
-	defer stmt.Close()
-	rs, err = stmt.Exec(title, body)
-	if err != nil {
-		return 0, err
-	}
-	if id, err = rs.LastInsertId(); id > 0 {
-		return id, nil
-	}
-	return 0, nil
-}
+
 func getRouterVariable(parameterName string, r *http.Request) string {
 	vars := mux.Vars(r)
 	return vars[parameterName]
@@ -337,8 +240,6 @@ func main() {
 	bootsrap.SetupDB()
 	router = bootsrap.SetupRoute()
 
-	router.HandleFunc("/articles", articlesStoreHandler).Methods("POST").Name("articles.store")
-	router.HandleFunc("/articles/create", articlesCreateHandler).Methods("GET").Name("aricles.create")
 	router.HandleFunc("/articles/{id:[0-9]+}/edit", articlesHandlerEditHandler).Methods("GET").Name("articles.edit")
 	router.HandleFunc("/articles/{id:[0-9]+}", articlesUpdateHandler).Methods("POST").Name("articles.update")
 	router.HandleFunc("/articles/{id:[0-9]+}/delete", articlesDeleteHandler).Methods("POST").Name("articles.delete")
