@@ -2,13 +2,14 @@ package article
 
 import (
 	//"goblog/pkg/logger"
+	"goblog/app/models"
 	"goblog/pkg/route"
 	"goblog/pkg/types"
 )
 
 //article文章类型
 type Article struct {
-	ID    uint64
+	models.BaseModel
 	Title string
 	Body  string
 }

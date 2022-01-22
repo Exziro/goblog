@@ -1,7 +1,7 @@
 package bootsrap
 
 import (
-	"goblog/pkg/model"
+	"goblog/app/models"
 	"goblog/pkg/route"
 	"goblog/routes"
 	"time"
@@ -19,7 +19,7 @@ func SetupRoute() *mux.Router {
 //setupDB初始化数据库和 ORM
 func SetupDB() {
 	//建立数据库连接池
-	db := model.ConnectDB()
+	db := models.ConnectDB()
 	//命令行打出数据库请求信息
 	sqlDB, _ := db.DB()
 
