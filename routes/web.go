@@ -2,7 +2,6 @@ package routes
 
 import (
 	"goblog/app/http/controllers"
-	"goblog/app/http/middlewares"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -15,8 +14,6 @@ func RegisterWebRoutes(r *mux.Router) {
 	r.HandleFunc("/", pc.Home).Methods("GET").Name("home")
 	r.HandleFunc("/about", pc.About).Methods("GET").Name("about")
 	r.NotFoundHandler = http.HandlerFunc(pc.NotFound)
-	//使用中间件
-	r.Use(middlewares.ForceHTMLMiddleware)
 
 	//文章相关页面
 	ac := new(controllers.ArticlesController)
@@ -27,5 +24,9 @@ func RegisterWebRoutes(r *mux.Router) {
 	r.HandleFunc("/articles/{id:[0-9]+}/edit", ac.Edit).Methods("GET").Name("articles.edit")
 	r.HandleFunc("/articles/{id:[0-9]+}", ac.Update).Methods("POST").Name("articles.update")
 	r.HandleFunc("/articles/{id:[0-9]+}/delete", ac.Delete).Methods("POST").Name("articles.delete")
-
+	//静态资源
+	r.PathPrefix("/css/").Handler(http.FileServer(http.Dir("./public")))
+	r.PathPrefix("/js/").Handler(http.FileServer(http.Dir("./public")))
+	//使用中间件
+	//r.Use(middlewares.ForceHTMLMiddleware)
 }

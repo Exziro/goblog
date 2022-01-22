@@ -51,7 +51,7 @@ func main() {
 	// fmt.Println("HomeURL:", homeURL)
 	// articlesURL, _ := router.Get("articles.show").URL()
 	// fmt.Println("ArticlesURL:", articlesURL)
-
+	//URL去斜杠
 	err := http.ListenAndServe(":3000", middlewares.RemoveTrailingSlash(router))
 	logger.LogError(err)
 }
