@@ -29,4 +29,9 @@ func RegisterWebRoutes(r *mux.Router) {
 	r.PathPrefix("/js/").Handler(http.FileServer(http.Dir("./public")))
 	//使用中间件
 	//r.Use(middlewares.ForceHTMLMiddleware)
+	//用户认证部分
+	auc := new(controllers.AuthController)
+	r.HandleFunc("/auth/register", auc.Register).Methods("GET").Name("auth.register")
+	r.HandleFunc("/auth/do-register", auc.DoRegiter).Methods("POST").Name("auth.doregister")
+
 }

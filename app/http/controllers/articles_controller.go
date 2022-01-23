@@ -21,11 +21,11 @@ type ArticlesController struct {
 }
 
 //ArticlesFormData 创建博文表单数据
-type ArticlesFormData struct {
-	Title, Body string
-	Article     article.Article
-	Errors      map[string]string
-}
+// type ArticlesFormData struct {
+// 	Title, Body string
+// 	Article     article.Article
+// 	Errors      map[string]string
+// }
 
 //展示文章（博文）内容
 func (*ArticlesController) Show(w http.ResponseWriter, r *http.Request) {
@@ -98,10 +98,10 @@ func (*ArticlesController) Store(w http.ResponseWriter, r *http.Request) {
 		// fmt.Fprintf(w, "body 的长度为: %v <br>", utf8.RuneCountInString(body))
 
 	} else {
-		view.Render(w, ArticlesFormData{
-			Title:  title,
-			Body:   body,
-			Errors: errors,
+		view.Render(w, view.D{
+			"Title":  title,
+			"Body":   body,
+			"Errors": errors,
 		}, "articles.show", "articles._form_field")
 
 		// fmt.Fprintf(w, "有错误发生，errors 的值为: %v <br>", errors)
@@ -122,7 +122,7 @@ func (*ArticlesController) Store(w http.ResponseWriter, r *http.Request) {
 
 //Create 文章创建
 func (*ArticlesController) Create(w http.ResponseWriter, r *http.Request) {
-	view.Render(w, ArticlesFormData{}, "articles.create", "articles._form_field")
+	view.Render(w, view.D{}, "articles.create", "articles._form_field")
 
 }
 func validateArticleFromData(title, body string) map[string]string {
@@ -164,11 +164,11 @@ func (*ArticlesController) Edit(w http.ResponseWriter, r *http.Request) {
 	} else {
 		// 4. 读取成功，显示编辑文章表单
 
-		view.Render(w, ArticlesFormData{
-			Title:   _article.Title,
-			Body:    _article.Body,
-			Article: _article,
-			Errors:  nil,
+		view.Render(w, view.D{
+			"Title":   _article.Title,
+			"Body":    _article.Body,
+			"Article": _article,
+			"Errors":  nil,
 		}, "articles.edit", "articles._form_field")
 	}
 }
@@ -214,11 +214,11 @@ func (*ArticlesController) Update(w http.ResponseWriter, r *http.Request) {
 
 		} else {
 			//表单验证不通过，显示理由
-			view.Render(w, ArticlesFormData{
-				Title:   title,
-				Body:    body,
-				Article: _article,
-				Errors:  errors,
+			view.Render(w, view.D{
+				"Title":   title,
+				"Body":    body,
+				"Article": _article,
+				"Errors":  errors,
 			}, "articles.edit", "articles._form_field")
 		}
 	}
