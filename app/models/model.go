@@ -3,6 +3,8 @@ package models
 import (
 	"goblog/pkg/logger"
 	"goblog/pkg/types"
+	"time"
+
 	//命令行查看调试语句
 	gormlogger "gorm.io/gorm/logger"
 	// GORM 的 MSYQL 数据库驱动导入
@@ -16,6 +18,9 @@ var DB *gorm.DB
 // BaseModel 模型基类
 type BaseModel struct {
 	ID uint64
+
+	CreatedAt time.Time `gorm:"column:created_at;index"`
+	UpdatedAt time.Time `gorm:"column:created_at;index"`
 }
 
 // GetStringID 获取 ID 的字符串格式
