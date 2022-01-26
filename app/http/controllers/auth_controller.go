@@ -2,7 +2,9 @@ package controllers
 
 import (
 	"fmt"
+
 	"goblog/app/models/user"
+	"goblog/app/request"
 	"goblog/pkg/view"
 	"net/http"
 )
@@ -10,6 +12,13 @@ import (
 // AuthController 处理静态页面
 type AuthController struct {
 }
+
+// type userForm struct {
+// 	Name            string `valid:"name"`
+// 	Email           string `valid:"email"`
+// 	Password        string `valid:"password"`
+// 	PasswordConfirm string `valid:"password_confirm"`
+// }
 
 //Register 注册页面
 func (*AuthController) Register(w http.ResponseWriter, r *http.Request) {
@@ -19,23 +28,29 @@ func (*AuthController) Register(w http.ResponseWriter, r *http.Request) {
 //DoRegister 处理注册逻辑
 func (*AuthController) DoRegiter(w http.ResponseWriter, r *http.Request) {
 	//初始化变量
-	name := r.PostFormValue("name")
-	email := r.PostFormValue("email")
-	password := r.PostFormValue("paasword")
-	//表单验证
-	//验证通过将数据存入
 	_user := user.User{
-		Name:     name,
-		Email:    email,
-		Password: password,
+		Name:            r.PostFormValue("name"),
+		Email:           r.PostFormValue("email"),
+		Password:        r.PostFormValue("password"),
+		PasswordConfirm: r.PostFormValue("password_confirm"),
 	}
-	_user.Creat()
-	//判定
-	if _user.ID > 0 {
-		fmt.Fprint(w, "插入成功")
+
+	//表单验证加规则设定验证通过将数据存入
+	errs := request.ValidateRegistrationForm(_user)
+	if len(errs) > 0 {
+		//错误发生 打印错误
+		view.RenderSimple(w, view.D{
+			"Errors": errs,
+			"User":   _user,
+		}, "auth.register")
 	} else {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, "创建用户失败")
+		//验证成功，创建数据
+		_user.Creat()
+		if _user.ID > 0 {
+			fmt.Fprint(w, "插入成功")
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "创建用户失败")
+		}
 	}
-	//表单不通过重新显示表单
 }
