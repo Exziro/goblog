@@ -22,7 +22,7 @@ type AuthController struct {
 
 //Register 注册页面
 func (*AuthController) Register(w http.ResponseWriter, r *http.Request) {
-	view.Render(w, view.D{}, "auth.register")
+	view.RenderSimple(w, view.D{}, "auth.register")
 }
 
 //DoRegister 处理注册逻辑
@@ -53,4 +53,14 @@ func (*AuthController) DoRegiter(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprint(w, "创建用户失败")
 		}
 	}
+}
+
+//Login 现实用户登录表单
+func (au *AuthController) Login(w http.ResponseWriter, r *http.Request) {
+	view.RenderSimple(w, view.D{}, "auth.login")
+}
+
+//DoLogin 验证用户登录
+func (au *AuthController) DoLogin(w http.ResponseWriter, r *http.Request) {
+	//
 }
