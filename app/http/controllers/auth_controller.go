@@ -84,3 +84,9 @@ func (au *AuthController) DoLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
+//Logout登出操作
+func (au *AuthController) Logout(w http.ResponseWriter, r *http.Request) {
+	auth.Logout()
+	http.Redirect(w, r, "/", http.StatusFound)
+}
