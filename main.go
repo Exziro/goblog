@@ -45,13 +45,7 @@ var db *sql.DB
 func main() {
 	bootsrap.SetupDB()
 	router = bootsrap.SetupRoute()
-	// 中间件的使用 强转网页类型
-	//通过命名路由获取URL（测试）
-	// homeURL, _ := router.Get("home").URL()
-	// fmt.Println("HomeURL:", homeURL)
-	// articlesURL, _ := router.Get("articles.show").URL()
-	// fmt.Println("ArticlesURL:", articlesURL)
-	//URL去斜杠
 	err := http.ListenAndServe(":3000", middlewares.RemoveTrailingSlash(router))
 	logger.LogError(err)
+
 }

@@ -49,7 +49,9 @@ func (*AuthController) DoRegiter(w http.ResponseWriter, r *http.Request) {
 		//验证成功，创建数据
 		_user.Creat()
 		if _user.ID > 0 {
-			fmt.Fprint(w, "插入成功")
+			auth.Login(_user)
+			//fmt.Fprint(w, "插入成功")
+			http.Redirect(w, r, "/", http.StatusFound)
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprint(w, "创建用户失败")
