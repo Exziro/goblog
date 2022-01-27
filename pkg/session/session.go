@@ -22,6 +22,7 @@ var Response http.ResponseWriter
 //StartSession 初始化会话，在中间件中调用
 func StartSession(w http.ResponseWriter, r *http.Request) {
 	var err error
+
 	// Store.Get() 的第二个参数是 Cookie 的名称
 	// gorilla/sessions 支持多会话，本项目我们只使用单一会话即可
 	Session, err = Stor.Get(r, "goblog-session")
@@ -49,7 +50,7 @@ func Forget(key string) {
 }
 
 // Flush 删除当前会话
-func Flush(key string) {
+func Flush() {
 	Session.Options.MaxAge = -1
 	Save()
 }

@@ -6,6 +6,7 @@ import (
 	"goblog/app/models/user"
 	"goblog/app/request"
 	"goblog/pkg/auth"
+	"goblog/pkg/session"
 	"goblog/pkg/view"
 	"net/http"
 )
@@ -58,12 +59,14 @@ func (*AuthController) DoRegiter(w http.ResponseWriter, r *http.Request) {
 
 //Login 现实用户登录表单
 func (au *AuthController) Login(w http.ResponseWriter, r *http.Request) {
+	session.Flush()
 	view.RenderSimple(w, view.D{}, "auth.login")
 }
 
 //DoLogin 验证用户登录
 func (au *AuthController) DoLogin(w http.ResponseWriter, r *http.Request) {
 	//初始化数据表单
+
 	email := r.PostFormValue("email")
 	password := r.PostFormValue("password")
 	//尝试登录

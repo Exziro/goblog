@@ -51,7 +51,7 @@ func (*ArticlesController) Show(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		//读取成功渲染模板
-		view.Render(w, article, "articles.show")
+		view.Render(w, view.D{"Article": article}, "articles.show")
 		//fmt.Fprint(w, "读取文章成功"+article.Title)
 	}
 	//fmt.Fprint(w, "文章ID："+id)
@@ -69,7 +69,7 @@ func (*ArticlesController) Index(w http.ResponseWriter, r *http.Request) {
 	} else {
 		//加载模板
 		//设置模板相对路径
-		view.Render(w, articles, "articles.index")
+		view.Render(w, view.D{"Articles": articles}, "articles.index")
 	}
 }
 
