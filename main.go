@@ -6,6 +6,9 @@ import (
 	//"goblog/pkg/logger"
 	"goblog/app/http/middlewares"
 	bootsrap "goblog/bootstrap"
+	"goblog/config"
+
+	c "goblog/pkg/config"
 	"goblog/pkg/logger"
 
 	//"goblog/pkg/model"
@@ -41,11 +44,16 @@ var db *sql.DB
 //验证表单内容函数
 
 //博文存储部分函数
-
+func init() {
+	// 初始化配置信息
+	config.Initialize()
+}
 func main() {
+	//初始化SQL
 	bootsrap.SetupDB()
+	//初始化路由
 	router = bootsrap.SetupRoute()
-	err := http.ListenAndServe(":3000", middlewares.RemoveTrailingSlash(router))
+	err := http.ListenAndServe(":"+c.GetString("app.port"), middlewares.RemoveTrailingSlash(router))
 	logger.LogError(err)
 
 }

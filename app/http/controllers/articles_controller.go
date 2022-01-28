@@ -60,6 +60,7 @@ func (*ArticlesController) Show(w http.ResponseWriter, r *http.Request) {
 //Index文章列表
 func (*ArticlesController) Index(w http.ResponseWriter, r *http.Request) {
 	articles, err := article.GetAll()
+	//fmt.Fprint(w, config.Get("app.name"))
 	if err != nil {
 		//数据库错误
 		logger.LogError(err)
