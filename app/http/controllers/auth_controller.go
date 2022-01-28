@@ -6,6 +6,7 @@ import (
 	"goblog/app/models/user"
 	"goblog/app/request"
 	"goblog/pkg/auth"
+	"goblog/pkg/flash"
 	"goblog/pkg/session"
 	"goblog/pkg/view"
 	"net/http"
@@ -49,8 +50,10 @@ func (*AuthController) DoRegiter(w http.ResponseWriter, r *http.Request) {
 		//验证成功，创建数据
 		_user.Creat()
 		if _user.ID > 0 {
+			flash.Success("恭喜你注册成功！")
 			auth.Login(_user)
 			//fmt.Fprint(w, "插入成功")
+
 			http.Redirect(w, r, "/", http.StatusFound)
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -74,6 +77,7 @@ func (au *AuthController) DoLogin(w http.ResponseWriter, r *http.Request) {
 	//尝试登录
 
 	if err := auth.Attempt(email, password); err == nil {
+		flash.Success("欢迎回来")
 		//登陆成功 跳转
 		http.Redirect(w, r, "/", http.StatusFound)
 	} else {
@@ -90,5 +94,6 @@ func (au *AuthController) DoLogin(w http.ResponseWriter, r *http.Request) {
 //Logout登出操作
 func (au *AuthController) Logout(w http.ResponseWriter, r *http.Request) {
 	auth.Logout()
+	flash.Success("成功退出")
 	http.Redirect(w, r, "/", http.StatusFound)
 }

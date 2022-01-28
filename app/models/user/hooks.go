@@ -20,7 +20,7 @@ import (
 // 	return
 // }
 
-// BeforeSave GORM 的模型钩子，在保存和更新模型前调用
+// BeforeSave GORM 的模型钩子，在保存和更新模型前调用 钩子不要整太多 会重复
 func (user *User) BeforeSave(tx *gorm.DB) (err error) {
 
 	if !password.IsHashed(user.Password) {
