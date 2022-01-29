@@ -19,7 +19,7 @@ func RegisterWebRoutes(r *mux.Router) {
 	//文章相关页面
 	ac := new(controllers.ArticlesController)
 	r.HandleFunc("/articles/{id:[0-9]+}", middlewares.Auth(ac.Show)).Methods("GET").Name("articles.show")
-	r.HandleFunc("/", middlewares.Auth(ac.Index)).Methods("GET").Name("home")
+	r.HandleFunc("/", ac.Index).Methods("GET").Name("home")
 	r.HandleFunc("/articles", middlewares.Auth(ac.Index)).Methods("GET").Name("articles.index")
 	r.HandleFunc("/articles", middlewares.Auth(ac.Store)).Methods("POST").Name("articles.store")
 	r.HandleFunc("/articles/create", middlewares.Auth(ac.Create)).Methods("GET").Name("articles.create")
@@ -39,5 +39,8 @@ func RegisterWebRoutes(r *mux.Router) {
 	r.HandleFunc("/auth/dologin", middlewares.Guest(auc.DoLogin)).Methods("POST").Name("auth.dologin")
 	r.HandleFunc("/auth/logout", middlewares.Auth(auc.Logout)).Methods("POST").Name("auth.logout")
 	r.Use(middlewares.StartSession)
+	//用户相关
+	uc := new(controllers.UserController)
+	r.HandleFunc("/users/{id:[0-9]+}", uc.Show).Methods("GET").Name("users.show")
 
 }
