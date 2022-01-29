@@ -4,6 +4,7 @@ import (
 	//"database/sql"
 
 	"fmt"
+	"goblog/pkg/auth"
 	"goblog/pkg/logger"
 	"goblog/pkg/view"
 
@@ -70,10 +71,11 @@ func (ac *ArticlesController) Index(w http.ResponseWriter, r *http.Request) {
 
 //Store文章保存
 func (*ArticlesController) Store(w http.ResponseWriter, r *http.Request) {
-	//currentUser := auth.User()
+	currentUser := auth.User()
 	_article := article.Article{
-		Title: r.PostFormValue("title"),
-		Body:  r.PostFormValue("body"),
+		Title:  r.PostFormValue("title"),
+		Body:   r.PostFormValue("body"),
+		UserID: currentUser.ID,
 	}
 
 	//表单验证
