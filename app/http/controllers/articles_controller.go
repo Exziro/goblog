@@ -4,10 +4,12 @@ import (
 	//"database/sql"
 
 	"fmt"
+	"goblog/pkg/flash"
 	"goblog/pkg/logger"
 	"goblog/pkg/view"
 
 	"goblog/app/models/article"
+	"goblog/app/policy"
 	"goblog/app/request"
 	"goblog/pkg/route"
 
@@ -50,7 +52,10 @@ func (*ArticlesController) Show(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		//读取成功渲染模板
-		view.Render(w, view.D{"Article": article}, "articles.show", "articles._article_meta")
+		view.Render(w, view.D{
+			"Article":          article,
+			"CanModifyArticle": policy.CanModifyArticle(article),
+		}, "articles.show", "articles._article_meta")
 		//fmt.Fprint(w, "读取文章成功"+article.Title)
 	}
 	//fmt.Fprint(w, "文章ID："+id)
@@ -149,12 +154,19 @@ func (*ArticlesController) Edit(w http.ResponseWriter, r *http.Request) {
 		}
 
 	} else {
-		// 4. 读取成功，显示编辑文章表单
+		//新增权限检车
+		if !policy.CanModifyArticle(_article) {
+			flash.Warning("没有权限")
+			http.Redirect(w, r, "/", http.StatusFound)
+		} else {
+			// 4. 读取成功，显示编辑文章表单
+			view.Render(w, view.D{
+				"Article": _article,
+				"Errors":  view.D{},
+			}, "articles.edit", "articles._form_field")
 
-		view.Render(w, view.D{
-			"Article": _article,
-			"Errors":  view.D{},
-		}, "articles.edit", "articles._form_field")
+		}
+
 	}
 }
 
@@ -172,37 +184,42 @@ func (*ArticlesController) Update(w http.ResponseWriter, r *http.Request) {
 		}
 
 	} else {
-		title := r.FormValue("title")
-		body := r.FormValue("body")
-		//表单验证
-		errors := request.ValidateArticleForm(_article)
+		if !policy.CanModifyArticle(_article) {
+			flash.Warning("没有权限！")
+			http.Redirect(w, r, "/", http.StatusForbidden)
+		} else {
+			title := r.FormValue("title")
+			body := r.FormValue("body")
+			//表单验证
+			errors := request.ValidateArticleForm(_article)
 
-		if len(errors) == 0 {
-			//表单验证结束 将内容进行更新
-			_article.Title = title
-			_article.Body = body
+			if len(errors) == 0 {
+				//表单验证结束 将内容进行更新
+				_article.Title = title
+				_article.Body = body
 
-			rowsAffected, err := _article.Update()
-			if err != nil {
-				logger.LogError(err)
-				w.WriteHeader(http.StatusInternalServerError)
-				fmt.Fprint(w, "500 服务器内部错误")
-			}
-			//更新成功进入跳转页面
-			if rowsAffected > 0 {
-				showURL := route.Name2URL("articles.show", "id", id)
-				http.Redirect(w, r, showURL, http.StatusFound)
+				rowsAffected, err := _article.Update()
+				if err != nil {
+					logger.LogError(err)
+					w.WriteHeader(http.StatusInternalServerError)
+					fmt.Fprint(w, "500 服务器内部错误")
+				}
+				//更新成功进入跳转页面
+				if rowsAffected > 0 {
+					showURL := route.Name2URL("articles.show", "id", id)
+					http.Redirect(w, r, showURL, http.StatusFound)
+
+				} else {
+					fmt.Fprint(w, "没有做任何更改")
+				}
 
 			} else {
-				fmt.Fprint(w, "没有做任何更改")
+				//表单验证不通过，显示理由
+				view.Render(w, view.D{
+					"Article": _article,
+					"Errors":  errors,
+				}, "articles.edit", "articles._form_field")
 			}
-
-		} else {
-			//表单验证不通过，显示理由
-			view.Render(w, view.D{
-				"Article": _article,
-				"Errors":  errors,
-			}, "articles.edit", "articles._form_field")
 		}
 	}
 
@@ -227,26 +244,33 @@ func (articles *ArticlesController) Delete(w http.ResponseWriter, r *http.Reques
 		}
 
 	} else {
-		//未出现错误，执行删除
-		rowsAffected, err := _article.Delete()
-		if err != nil {
-			logger.LogError(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprint(w, "500服务器内部错误")
-
+		if !policy.CanModifyArticle(_article) {
+			flash.Warning("没有权限！")
+			http.Redirect(w, r, "/", http.StatusFound)
 		} else {
-			//未发生错误
-			if rowsAffected > 0 {
-				//重定向到文章列表
-				indexURL := route.Name2URL("articles.index", "id", id)
-				http.Redirect(w, r, indexURL, http.StatusFound)
+			//未出现错误，执行删除
+			rowsAffected, err := _article.Delete()
+			if err != nil {
+				logger.LogError(err)
+				w.WriteHeader(http.StatusInternalServerError)
+				fmt.Fprint(w, "500服务器内部错误")
 
 			} else {
-				//Edge case
-				w.WriteHeader(http.StatusNotFound)
-				fmt.Fprint(w, "404未找到文章")
+				//未发生错误
+				if rowsAffected > 0 {
+					//重定向到文章列表
+					indexURL := route.Name2URL("articles.index", "id", id)
+					http.Redirect(w, r, indexURL, http.StatusFound)
 
+				} else {
+					//Edge case
+					w.WriteHeader(http.StatusNotFound)
+					fmt.Fprint(w, "404未找到文章")
+
+				}
 			}
+
 		}
+
 	}
 }
