@@ -57,7 +57,7 @@ func (ac *ArticlesController) Show(w http.ResponseWriter, r *http.Request) {
 
 //Index文章列表
 func (ac *ArticlesController) Index(w http.ResponseWriter, r *http.Request) {
-	articles, err := article.GetAll()
+	articles, pagerData, err := article.GetAll(r, 2)
 	//fmt.Fprint(w, config.Get("app.name"))
 	if err != nil {
 		//数据库错误
@@ -65,7 +65,10 @@ func (ac *ArticlesController) Index(w http.ResponseWriter, r *http.Request) {
 	} else {
 		//加载模板
 		//设置模板相对路径
-		view.Render(w, view.D{"Articles": articles}, "articles.index", "articles._article_meta")
+		view.Render(w, view.D{
+			"Articles":  articles,
+			"PagerData": pagerData,
+		}, "articles.index", "articles._article_meta")
 	}
 }
 

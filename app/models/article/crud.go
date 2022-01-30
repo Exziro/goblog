@@ -3,6 +3,9 @@ package article
 import (
 	"goblog/app/models"
 	"goblog/pkg/logger"
+	"goblog/pkg/pagination"
+	"goblog/pkg/route"
+	"net/http"
 
 	"goblog/pkg/types"
 )
@@ -16,13 +19,19 @@ func Get(idstr string) (Article, error) {
 	}
 	return article, nil
 }
-func GetAll() ([]Article, error) {
-	var articles []Article
-	if err := models.DB.Preload("User").Find(&articles).Error; err != nil {
-		return articles, err
 
-	}
-	return articles, nil
+//获取全部文章
+func GetAll(r *http.Request, Perpage int) ([]Article, pagination.ViewData, error) {
+	//初始化分页
+	db := models.DB.Model(Article{}).Order("created_at desc")
+	_pager := pagination.New(r, db, route.Name2URL("articles.index"), Perpage)
+	//获取视图数据
+	viewData := _pager.Paging()
+	//获取数据
+	var articles []Article
+	_pager.Results(&articles)
+
+	return articles, viewData, nil
 }
 func (articles *Article) Create() (err error) {
 	result := models.DB.Create(&articles)
