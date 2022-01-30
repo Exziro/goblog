@@ -49,3 +49,8 @@ func (*CategoriesController) Store(w http.ResponseWriter, r *http.Request) {
 		}, "categories.create")
 	}
 }
+
+//Show 显示分类栏
+func (*CategoriesController) Show(w http.ResponseWriter, r *http.Request) {
+
+}
