@@ -1,9 +1,10 @@
 package main
 
 import (
-	"database/sql"
+
 	//"go/types"
 	//"goblog/pkg/logger"
+	"embed"
 	"goblog/app/http/middlewares"
 	bootsrap "goblog/bootstrap"
 	"goblog/config"
@@ -17,7 +18,6 @@ import (
 
 	//"html/template"
 	"net/http"
-	"net/url"
 
 	//"time"
 	//"unicode/utf8"
@@ -26,22 +26,16 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type ArticlesFormData struct {
-	Title, Body string
-	URL         *url.URL
-	Errors      map[string]string
-}
+//go:embed resources/views/articles/*
+//go:embed resources/views/auth/*
+//go:embed resources/views/categories/*
+//go:embed resources/views/layouts/*
+var tplFS embed.FS
 
-//文章结构体
-type Article struct {
-	Title, Body string
-	ID          int64
-}
+//go:embed public/*
+var staticFS embed.FS
 
 var router *mux.Router
-var db *sql.DB
-
-//验证表单内容函数
 
 //博文存储部分函数
 func init() {
@@ -49,10 +43,13 @@ func init() {
 	config.Initialize()
 }
 func main() {
+
 	//初始化SQL
 	bootsrap.SetupDB()
+
+	bootsrap.SetupTemplate(tplFS)
 	//初始化路由
-	router = bootsrap.SetupRoute()
+	router = bootsrap.SetupRoute(staticFS)
 	err := http.ListenAndServe(":"+c.GetString("app.port"), middlewares.RemoveTrailingSlash(router))
 	logger.LogError(err)
 

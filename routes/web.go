@@ -27,8 +27,8 @@ func RegisterWebRoutes(r *mux.Router) {
 	r.HandleFunc("/articles/{id:[0-9]+}", middlewares.Auth(ac.Update)).Methods("POST").Name("articles.update")
 	r.HandleFunc("/articles/{id:[0-9]+}/delete", middlewares.Auth(ac.Delete)).Methods("POST").Name("articles.delete")
 	//静态资源
-	r.PathPrefix("/css/").Handler(http.FileServer(http.Dir("./public")))
-	r.PathPrefix("/js/").Handler(http.FileServer(http.Dir("./public")))
+	//r.PathPrefix("/css/").Handler(http.FileServer(http.Dir("./public")))
+	//r.PathPrefix("/js/").Handler(http.FileServer(http.Dir("./public")))
 	//使用中间件
 	//r.Use(middlewares.ForceHTMLMiddleware)
 	//用户认证部分
